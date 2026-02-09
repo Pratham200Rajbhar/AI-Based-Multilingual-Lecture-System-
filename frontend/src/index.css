@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans text-gray-800 antialiased bg-gray-50;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm
+           placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+           outline-none transition-colors;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           bg-blue-600 text-white text-sm font-medium rounded-lg
+           hover:bg-blue-700 focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-1
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           bg-white text-gray-700 text-sm font-medium rounded-lg
+           border border-gray-300 hover:bg-gray-50 transition-colors;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           bg-red-600 text-white text-sm font-medium rounded-lg
+           hover:bg-red-700 transition-colors;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
+  }
+
+  .table-clean { @apply w-full text-sm; }
+  .table-clean thead { @apply bg-gray-50 border-b border-gray-200; }
+  .table-clean th { @apply text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider; }
+  .table-clean td { @apply py-3 px-4; }
+  .table-clean tbody tr { @apply border-b border-gray-100 hover:bg-gray-50 transition-colors; }
+
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-gray-200 border-t-blue-600;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4;
+  }
+  .modal-box {
+    @apply bg-white rounded-lg shadow-xl w-full max-w-md animate-fade-in p-6;
+  }
+}

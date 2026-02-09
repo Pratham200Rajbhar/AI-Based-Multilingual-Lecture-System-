@@ -1,0 +1,256 @@
+const Institution = require('../models/Institution');
+const Department = require('../models/Department');
+const Course = require('../models/Course');
+const User = require('../models/User');
+const Lecture = require('../models/Lecture');
+const Quiz = require('../models/Quiz');
+const QuizResult = require('../models/QuizResult');
+
+// ========== INSTITUTIONS ==========
+
+// @desc    Get all institutions
+// @route   GET /api/admin/institutions
+exports.getInstitutions = async (req, res, next) => {
+  try {
+    const institutions = await Institution.find().sort({ name: 1 });
+    res.json({ institutions });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create institution
+// @route   POST /api/admin/institutions
+exports.createInstitution = async (req, res, next) => {
+  try {
+    const institution = await Institution.create(req.body);
+    res.status(201).json({ institution, message: 'Institution created successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update institution
+// @route   PUT /api/admin/institutions/:id
+exports.updateInstitution = async (req, res, next) => {
+  try {
+    const institution = await Institution.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
+    if (!institution) return res.status(404).json({ message: 'Institution not found' });
+    res.json({ institution, message: 'Institution updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete institution
+// @route   DELETE /api/admin/institutions/:id
+exports.deleteInstitution = async (req, res, next) => {
+  try {
+    const institution = await Institution.findByIdAndDelete(req.params.id);
+    if (!institution) return res.status(404).json({ message: 'Institution not found' });
+    res.json({ message: 'Institution deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ========== DEPARTMENTS ==========
+
+// @desc    Get all departments
+// @route   GET /api/admin/departments
+exports.getDepartments = async (req, res, next) => {
+  try {
+    const { institution } = req.query;
+    const filter = {};
+    if (institution) filter.institution = institution;
+
+    const departments = await Department.find(filter)
+      .populate('institution', 'name code')
+      .sort({ name: 1 });
+
+    res.json({ departments });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create department
+// @route   POST /api/admin/departments
+exports.createDepartment = async (req, res, next) => {
+  try {
+    const department = await Department.create(req.body);
+    await department.populate('institution', 'name code');
+    res.status(201).json({ department, message: 'Department created successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update department
+// @route   PUT /api/admin/departments/:id
+exports.updateDepartment = async (req, res, next) => {
+  try {
+    const department = await Department.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    }).populate('institution', 'name code');
+    if (!department) return res.status(404).json({ message: 'Department not found' });
+    res.json({ department, message: 'Department updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete department
+// @route   DELETE /api/admin/departments/:id
+exports.deleteDepartment = async (req, res, next) => {
+  try {
+    const department = await Department.findByIdAndDelete(req.params.id);
+    if (!department) return res.status(404).json({ message: 'Department not found' });
+    res.json({ message: 'Department deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ========== COURSES ==========
+
+// @desc    Get all courses
+// @route   GET /api/admin/courses
+exports.getCourses = async (req, res, next) => {
+  try {
+    const { department, semester } = req.query;
+    const filter = {};
+    if (department) filter.department = department;
+    if (semester) filter.semester = parseInt(semester);
+
+    const courses = await Course.find(filter)
+      .populate('department', 'name code')
+      .sort({ name: 1 });
+
+    res.json({ courses });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create course
+// @route   POST /api/admin/courses
+exports.createCourse = async (req, res, next) => {
+  try {
+    const course = await Course.create(req.body);
+    await course.populate('department', 'name code');
+    res.status(201).json({ course, message: 'Course created successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update course
+// @route   PUT /api/admin/courses/:id
+exports.updateCourse = async (req, res, next) => {
+  try {
+    const course = await Course.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    }).populate('department', 'name code');
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+    res.json({ course, message: 'Course updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete course
+// @route   DELETE /api/admin/courses/:id
+exports.deleteCourse = async (req, res, next) => {
+  try {
+    const course = await Course.findByIdAndDelete(req.params.id);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+    res.json({ message: 'Course deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ========== REPORTS / STATS ==========
+
+// @desc    Get dashboard stats
+// @route   GET /api/admin/stats
+exports.getStats = async (req, res, next) => {
+  try {
+    const [
+      totalUsers,
+      totalStudents,
+      totalProfessors,
+      totalInstitutions,
+      totalDepartments,
+      totalCourses,
+      totalLectures,
+      totalQuizzes,
+      totalQuizResults
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: 'student' }),
+      User.countDocuments({ role: 'professor' }),
+      Institution.countDocuments(),
+      Department.countDocuments(),
+      Course.countDocuments(),
+      Lecture.countDocuments(),
+      Quiz.countDocuments(),
+      QuizResult.countDocuments()
+    ]);
+
+    res.json({
+      stats: {
+        totalUsers,
+        totalStudents,
+        totalProfessors,
+        totalInstitutions,
+        totalDepartments,
+        totalCourses,
+        totalLectures,
+        totalQuizzes,
+        totalQuizResults
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get progress reports
+// @route   GET /api/admin/reports
+exports.getReports = async (req, res, next) => {
+  try {
+    // Top performing students
+    const topStudents = await QuizResult.aggregate([
+      {
+        $group: {
+          _id: '$student',
+          totalQuizzes: { $sum: 1 },
+          avgScore: { $avg: { $multiply: [{ $divide: ['$totalScore', '$maxScore'] }, 100] } }
+        }
+      },
+      { $sort: { avgScore: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Populate student names
+    await User.populate(topStudents, { path: '_id', select: 'name email' });
+
+    // Recent quiz results
+    const recentResults = await QuizResult.find()
+      .populate('quiz', 'title')
+      .populate('student', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    res.json({ topStudents, recentResults });
+  } catch (error) {
+    next(error);
+  }
+};

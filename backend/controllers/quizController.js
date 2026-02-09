@@ -1,0 +1,291 @@
+const Quiz = require('../models/Quiz');
+const QuizResult = require('../models/QuizResult');
+
+// @desc    Get all quizzes (with pagination & filters)
+// @route   GET /api/quizzes?page=1&limit=20&course=id&search=keyword
+exports.getAllQuizzes = async (req, res, next) => {
+  try {
+    const { course, search, page, limit } = req.query;
+    const filter = {};
+    if (course) filter.course = course;
+    if (search) {
+      filter.title = { $regex: search, $options: 'i' };
+    }
+
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [totalItems, quizzes] = await Promise.all([
+      Quiz.countDocuments(filter),
+      Quiz.find(filter)
+        .populate('course', 'name code')
+        .populate('createdBy', 'name email')
+        .select('-questions.correctAnswer')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+    ]);
+
+    // For each quiz, check if current user has attempted
+    const quizzesWithStatus = await Promise.all(
+      quizzes.map(async (quiz) => {
+        const result = await QuizResult.findOne({
+          quiz: quiz._id,
+          student: req.user._id
+        });
+        return {
+          ...quiz.toObject(),
+          attempted: !!result,
+          score: result ? result.totalScore : null,
+          maxScore: result ? result.maxScore : null
+        };
+      })
+    );
+
+    const totalPages = Math.ceil(totalItems / limitNum);
+    res.json({
+      quizzes: quizzesWithStatus,
+      currentPage: pageNum,
+      totalPages,
+      totalItems,
+      limit: limitNum,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get quiz by ID (for attempting)
+// @route   GET /api/quizzes/:id
+exports.getQuizById = async (req, res, next) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id)
+      .populate('course', 'name code')
+      .populate('createdBy', 'name email');
+
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    // Hide correct answers for students
+    const quizObj = quiz.toObject();
+    if (req.user.role === 'student') {
+      quizObj.questions = quizObj.questions.map(q => {
+        const { correctAnswer, ...rest } = q;
+        return rest;
+      });
+    }
+
+    // Check if already attempted
+    const existing = await QuizResult.findOne({
+      quiz: quiz._id,
+      student: req.user._id
+    });
+
+    res.json({
+      quiz: quizObj,
+      attempted: !!existing,
+      result: existing || null
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create quiz
+// @route   POST /api/quizzes
+exports.createQuiz = async (req, res, next) => {
+  try {
+    const { title, course, questions, timeLimit, deadline } = req.body;
+
+    if (!questions || questions.length === 0) {
+      return res.status(400).json({ message: 'Quiz must have at least one question' });
+    }
+
+    const quiz = await Quiz.create({
+      title,
+      course,
+      questions,
+      timeLimit: timeLimit || 30,
+      deadline: deadline ? new Date(deadline) : undefined,
+      createdBy: req.user._id
+    });
+
+    await quiz.populate('course', 'name code');
+    await quiz.populate('createdBy', 'name email');
+
+    res.status(201).json({ quiz, message: 'Quiz created successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Submit quiz answers
+// @route   POST /api/quizzes/:id/submit
+exports.submitQuiz = async (req, res, next) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    // Check deadline
+    if (quiz.deadline && new Date() > quiz.deadline) {
+      return res.status(400).json({ message: 'Quiz deadline has passed' });
+    }
+
+    // Check if already submitted
+    const existing = await QuizResult.findOne({
+      quiz: quiz._id,
+      student: req.user._id
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: 'You have already submitted this quiz' });
+    }
+
+    const { answers } = req.body;
+
+    if (!answers || answers.length === 0) {
+      return res.status(400).json({ message: 'Please provide answers' });
+    }
+
+    // Evaluate answers
+    let totalScore = 0;
+    let maxScore = 0;
+    const evaluatedAnswers = quiz.questions.map((question) => {
+      maxScore += question.points;
+      const userAnswer = answers.find(a => a.questionId === question._id.toString());
+
+      if (!userAnswer) {
+        return {
+          questionId: question._id,
+          answer: '',
+          isCorrect: false,
+          pointsEarned: 0
+        };
+      }
+
+      let isCorrect = false;
+      let pointsEarned = 0;
+
+      if (question.type === 'mcq') {
+        isCorrect = userAnswer.answer.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
+        pointsEarned = isCorrect ? question.points : 0;
+      }
+      // Descriptive answers are graded manually (pointsEarned stays 0)
+
+      totalScore += pointsEarned;
+
+      return {
+        questionId: question._id,
+        answer: userAnswer.answer,
+        isCorrect,
+        pointsEarned
+      };
+    });
+
+    const result = await QuizResult.create({
+      quiz: quiz._id,
+      student: req.user._id,
+      answers: evaluatedAnswers,
+      totalScore,
+      maxScore
+    });
+
+    res.status(201).json({
+      result,
+      message: 'Quiz submitted successfully',
+      score: `${totalScore}/${maxScore}`
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get quiz results
+// @route   GET /api/quizzes/:id/results
+exports.getQuizResults = async (req, res, next) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id)
+      .populate('course', 'name code');
+
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    // Professors/admins can see all results; students see only their own
+    let results;
+    if (['professor', 'dept_admin', 'inst_admin', 'super_admin'].includes(req.user.role)) {
+      results = await QuizResult.find({ quiz: req.params.id })
+        .populate('student', 'name email')
+        .sort({ totalScore: -1 });
+    } else {
+      results = await QuizResult.find({
+        quiz: req.params.id,
+        student: req.user._id
+      });
+    }
+
+    res.json({ quiz: { title: quiz.title, course: quiz.course }, results });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update quiz
+// @route   PUT /api/quizzes/:id
+exports.updateQuiz = async (req, res, next) => {
+  try {
+    let quiz = await Quiz.findById(req.params.id);
+
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    if (quiz.createdBy.toString() !== req.user._id.toString() &&
+        !['dept_admin', 'inst_admin', 'super_admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Not authorized to update this quiz' });
+    }
+
+    quiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    })
+      .populate('course', 'name code')
+      .populate('createdBy', 'name email');
+
+    res.json({ quiz, message: 'Quiz updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete quiz
+// @route   DELETE /api/quizzes/:id
+exports.deleteQuiz = async (req, res, next) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    if (quiz.createdBy.toString() !== req.user._id.toString() &&
+        !['dept_admin', 'inst_admin', 'super_admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Not authorized to delete this quiz' });
+    }
+
+    // Delete associated results
+    await QuizResult.deleteMany({ quiz: quiz._id });
+    await Quiz.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Quiz deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
