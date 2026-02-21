@@ -92,17 +92,26 @@ const seedData = async () => {
         role: 'dept_admin',
         institution: institution._id,
         department: csDept._id
+      },
+      {
+        name: 'Inst Admin',
+        email: 'instadmin@demo.com',
+        password: 'admin123',
+        role: 'inst_admin',
+        institution: institution._id,
+        department: csDept._id
       }
     ]);
     console.log('Users created');
 
     console.log('\n=== Seed Complete ===');
     console.log('\nTest Accounts:');
-    console.log('Admin:     admin@demo.com / admin123');
-    console.log('Professor: professor@demo.com / prof123');
-    console.log('Student:   student@demo.com / student123');
-    console.log('Student2:  jane@demo.com / student123');
-    console.log('DeptAdmin: deptadmin@demo.com / admin123');
+    console.log('SuperAdmin: admin@demo.com / admin123');
+    console.log('Professor:  professor@demo.com / prof123');
+    console.log('Student:    student@demo.com / student123');
+    console.log('Student2:   jane@demo.com / student123');
+    console.log('DeptAdmin:  deptadmin@demo.com / admin123');
+    console.log('InstAdmin:  instadmin@demo.com / admin123');
 
     process.exit(0);
   } catch (error) {

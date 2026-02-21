@@ -5,38 +5,74 @@
  */
 let redis = null;
 let isConnected = false;
+let hasLoggedUnavailable = false;
+
+const markRedisUnavailable = (message) => {
+  isConnected = false;
+  if (!hasLoggedUnavailable) {
+    console.warn('Redis not available, running without cache:', message);
+    hasLoggedUnavailable = true;
+  }
+};
 
 const initRedis = async () => {
+  if (!process.env.REDIS_URL) {
+    markRedisUnavailable('REDIS_URL is not configured');
+    return;
+  }
+
   try {
     const Redis = require('ioredis');
-    redis = new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: 3,
+    const client = new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: 1,
       retryStrategy(times) {
-        if (times > 3) return null;
-        return Math.min(times * 200, 2000);
+        if (times > 1) return null;
+        return 300;
       },
-      lazyConnect: true
+      lazyConnect: true,
+      enableOfflineQueue: false,
+      connectTimeout: 3000
     });
 
-    await redis.connect();
-    isConnected = true;
-    console.log('Redis connected');
-
-    redis.on('error', (err) => {
-      console.warn('Redis error:', err.message);
+    client.on('error', (err) => {
       isConnected = false;
+
+      if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
+        markRedisUnavailable(err.message);
+        return;
+      }
+
+      console.warn('Redis error:', err.message);
     });
 
-    redis.on('reconnecting', () => {
+    client.on('reconnecting', () => {
       console.log('Redis reconnecting...');
     });
 
-    redis.on('connect', () => {
+    client.on('connect', () => {
       isConnected = true;
+      hasLoggedUnavailable = false;
+      console.log('Redis connected');
     });
+
+    client.on('end', () => {
+      isConnected = false;
+    });
+
+    await client.connect();
+    redis = client;
   } catch (err) {
-    console.warn('Redis not available, running without cache:', err.message);
-    isConnected = false;
+    markRedisUnavailable(err.message);
+
+    if (redis) {
+      try {
+        redis.disconnect();
+      } catch {
+        // Ignore disconnect failures on startup
+      }
+    }
+
+    redis = null;
   }
 };
 

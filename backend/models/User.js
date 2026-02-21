@@ -33,6 +33,19 @@ const userSchema = new mongoose.Schema({
   department: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Department'
+  },
+  phone: {
+    type: String,
+    trim: true
+  },
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: 500
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true

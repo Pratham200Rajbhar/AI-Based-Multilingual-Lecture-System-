@@ -20,6 +20,10 @@ exports.register = async (req, res, next) => {
 
     const { email, password, name, role, institution, department } = req.body;
 
+    // Only allow self-registration as student or professor
+    const allowedSelfRegRoles = ['student', 'professor'];
+    const userRole = role && allowedSelfRegRoles.includes(role) ? role : 'student';
+
     // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -30,10 +34,14 @@ exports.register = async (req, res, next) => {
       email,
       password,
       name,
-      role: role || 'student',
+      role: userRole,
       institution,
       department
     });
+
+    // Populate institution and department for the response
+    await user.populate('institution', 'name code');
+    await user.populate('department', 'name code');
 
     const token = generateToken(user._id);
 
@@ -43,7 +51,9 @@ exports.register = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        institution: user.institution,
+        department: user.department
       }
     });
   } catch (error) {
@@ -74,15 +84,22 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    // Populate institution and department
+    const populatedUser = await User.findById(user._id)
+      .populate('institution', 'name code')
+      .populate('department', 'name code');
+
     const token = generateToken(user._id);
 
     res.json({
       token,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
+        id: populatedUser._id,
+        name: populatedUser.name,
+        email: populatedUser.email,
+        role: populatedUser.role,
+        institution: populatedUser.institution,
+        department: populatedUser.department
       }
     });
   } catch (error) {
@@ -108,12 +125,17 @@ exports.getProfile = async (req, res, next) => {
 // @route   PUT /api/auth/profile
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name } = req.body;
+    const { name, phone, bio } = req.body;
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (bio !== undefined) updateData.bio = bio;
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { name },
+      updateData,
       { new: true, runValidators: true }
-    );
+    ).populate('institution', 'name code').populate('department', 'name code');
 
     res.json({ user });
   } catch (error) {

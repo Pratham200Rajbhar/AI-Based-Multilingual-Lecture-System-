@@ -1,90 +1,201 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
-import Layout from './components/Layout/Layout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Lectures from './pages/Lectures';
-import LectureDetail from './pages/LectureDetail';
-import Quizzes from './pages/Quizzes';
-import QuizAttempt from './pages/QuizAttempt';
-import QuizResults from './pages/QuizResults';
-import CreateQuiz from './pages/CreateQuiz';
-import Profile from './pages/Profile';
-import Attendance from './pages/Attendance';
-import Assignments from './pages/Assignments';
-import AssignmentDetail from './pages/AssignmentDetail';
-import Timetable from './pages/Timetable';
-import Notifications from './pages/Notifications';
-import Announcements from './pages/Announcements';
-import Forum from './pages/Forum';
-import ForumPost from './pages/ForumPost';
-import Calendar from './pages/Calendar';
-import Analytics from './pages/Analytics';
-import Gradebook from './pages/Gradebook';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import UserManagement from './pages/admin/UserManagement';
-import CourseManagement from './pages/admin/CourseManagement';
-import BulkOperations from './pages/admin/BulkOperations';
-import AuditLogs from './pages/admin/AuditLogs';
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './context/AuthContext'
 
-function PrivateRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="flex justify-center items-center h-screen"><div className="spinner h-10 w-10"></div></div>;
-  return user ? children : <Navigate to="/login" />;
+// Layouts
+import StudentLayout from './components/layouts/StudentLayout'
+import ProfessorLayout from './components/layouts/ProfessorLayout'
+import InstitutionalAdminLayout from './components/layouts/InstitutionalAdminLayout'
+import DepartmentalAdminLayout from './components/layouts/DepartmentalAdminLayout'
+import SuperAdminLayout from './components/layouts/SuperAdminLayout'
+
+// Auth Pages
+import SignIn from './pages/auth/SignIn'
+import SignUp from './pages/auth/SignUp'
+
+// Student Pages
+import StudentDashboard from './pages/student/Dashboard'
+import StudentLectures from './pages/student/Lectures'
+import StudentLectureDetail from './pages/student/LectureDetail'
+import StudentQuiz from './pages/student/Quiz'
+import StudentQuizDetail from './pages/student/QuizDetail'
+import StudentProgress from './pages/student/Progress'
+import StudentProfile from './pages/student/Profile'
+import StudentAssignments from './pages/student/Assignments'
+import StudentAttendance from './pages/student/Attendance'
+import StudentTimetable from './pages/student/Timetable'
+import StudentNotifications from './pages/student/Notifications'
+
+// Professor Pages
+import ProfDashboard from './pages/professor/Dashboard'
+import ProfUpload from './pages/professor/Upload'
+import ProfMyLectures from './pages/professor/MyLectures'
+import ProfQuizBuilder from './pages/professor/QuizBuilder'
+import ProfStudents from './pages/professor/Students'
+import ProfAnalytics from './pages/professor/Analytics'
+import ProfSettings from './pages/professor/Settings'
+import ProfAssignments from './pages/professor/Assignments'
+import ProfAttendance from './pages/professor/Attendance'
+import ProfGradebook from './pages/professor/Gradebook'
+
+// Institutional Admin Pages
+import InstOverview from './pages/inst-admin/Overview'
+import InstDepartments from './pages/inst-admin/Departments'
+import InstDeptAdmins from './pages/inst-admin/DeptAdmins'
+import InstPolicies from './pages/inst-admin/Policies'
+import InstEscalations from './pages/inst-admin/Escalations'
+import InstAnalytics from './pages/inst-admin/Analytics'
+import InstProfile from './pages/inst-admin/Profile'
+
+// Department Admin Pages
+import DeptOverview from './pages/dept-admin/Overview'
+import DeptCourses from './pages/dept-admin/Courses'
+import DeptFaculty from './pages/dept-admin/Faculty'
+import DeptAnalytics from './pages/dept-admin/Analytics'
+import DeptStudentIssues from './pages/dept-admin/StudentIssues'
+import DeptPolicies from './pages/dept-admin/Policies'
+import DeptProfile from './pages/dept-admin/Profile'
+
+// Super Admin Pages
+import SuperOverview from './pages/super-admin/Overview'
+import SuperInstitutions from './pages/super-admin/Institutions'
+import SuperInstAdmins from './pages/super-admin/InstAdmins'
+import SuperMonitoring from './pages/super-admin/Monitoring'
+import SuperAnalytics from './pages/super-admin/Analytics'
+import SuperSecurityLogs from './pages/super-admin/SecurityLogs'
+import SuperPolicies from './pages/super-admin/Policies'
+import SuperProfile from './pages/super-admin/Profile'
+
+// Auth guard components
+function PrivateRoute({ children, allowedRoles }) {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="flex justify-center items-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>
+  if (!user) return <Navigate to="/signin" replace />
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to={getRoleDefaultPath(user.role)} replace />
+  }
+  return children
 }
 
-function AdminRoute({ children }) {
-  const { user, isAdmin, loading } = useAuth();
-  if (loading) return <div className="flex justify-center items-center h-screen"><div className="spinner h-10 w-10"></div></div>;
-  if (!user) return <Navigate to="/login" />;
-  if (!isAdmin()) return <Navigate to="/dashboard" />;
-  return children;
+function getRoleDefaultPath(role) {
+  switch (role) {
+    case 'student': return '/student/dashboard'
+    case 'professor': return '/professor/dashboard'
+    case 'dept_admin': return '/dept-admin/overview'
+    case 'inst_admin': return '/inst-admin/overview'
+    case 'super_admin': return '/super-admin/overview'
+    default: return '/signin'
+  }
 }
 
-function ProfessorRoute({ children }) {
-  const { user, canManageContent, loading } = useAuth();
-  if (loading) return <div className="flex justify-center items-center h-screen"><div className="spinner h-10 w-10"></div></div>;
-  if (!user) return <Navigate to="/login" />;
-  if (!canManageContent()) return <Navigate to="/dashboard" />;
-  return children;
+function AuthRedirect() {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="flex justify-center items-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>
+  if (user) return <Navigate to={getRoleDefaultPath(user.role)} replace />
+  return <Navigate to="/signin" replace />
 }
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-        <Route index element={<Navigate to="/dashboard" />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="lectures" element={<Lectures />} />
-        <Route path="lectures/:id" element={<LectureDetail />} />
-        <Route path="quizzes" element={<Quizzes />} />
-        <Route path="quizzes/create" element={<ProfessorRoute><CreateQuiz /></ProfessorRoute>} />
-        <Route path="quizzes/:id/attempt" element={<QuizAttempt />} />
-        <Route path="quizzes/:id/results" element={<QuizResults />} />
-        <Route path="attendance" element={<Attendance />} />
-        <Route path="assignments" element={<Assignments />} />
-        <Route path="assignments/:id" element={<AssignmentDetail />} />
-        <Route path="timetable" element={<Timetable />} />
-        <Route path="gradebook" element={<Gradebook />} />
-        <Route path="notifications" element={<Notifications />} />
-        <Route path="announcements" element={<Announcements />} />
-        <Route path="forum" element={<Forum />} />
-        <Route path="forum/:id" element={<ForumPost />} />
-        <Route path="calendar" element={<Calendar />} />
-        <Route path="analytics" element={<ProfessorRoute><Analytics /></ProfessorRoute>} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
-        <Route path="admin/courses" element={<AdminRoute><CourseManagement /></AdminRoute>} />
-        <Route path="admin/bulk" element={<AdminRoute><BulkOperations /></AdminRoute>} />
-        <Route path="admin/audit-logs" element={<AdminRoute><AuditLogs /></AdminRoute>} />
+      {/* Auth */}
+      <Route path="/" element={<AuthRedirect />} />
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/login" element={<Navigate to="/signin" replace />} />
+      <Route path="/register" element={<Navigate to="/signup" replace />} />
+
+      {/* Student Portal */}
+      <Route path="/student" element={
+        <PrivateRoute allowedRoles={['student']}>
+          <StudentLayout />
+        </PrivateRoute>
+      }>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="lectures" element={<StudentLectures />} />
+        <Route path="lectures/:id" element={<StudentLectureDetail />} />
+        <Route path="quiz" element={<StudentQuiz />} />
+        <Route path="quiz/:id" element={<StudentQuizDetail />} />
+        <Route path="assignments" element={<StudentAssignments />} />
+        <Route path="attendance" element={<StudentAttendance />} />
+        <Route path="timetable" element={<StudentTimetable />} />
+        <Route path="notifications" element={<StudentNotifications />} />
+        <Route path="progress" element={<StudentProgress />} />
+        <Route path="profile" element={<StudentProfile />} />
       </Route>
-      <Route path="*" element={<Navigate to="/dashboard" />} />
+
+      {/* Professor Portal */}
+      <Route path="/professor" element={
+        <PrivateRoute allowedRoles={['professor']}>
+          <ProfessorLayout />
+        </PrivateRoute>
+      }>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<ProfDashboard />} />
+        <Route path="upload" element={<ProfUpload />} />
+        <Route path="my-lectures" element={<ProfMyLectures />} />
+        <Route path="quiz-builder" element={<ProfQuizBuilder />} />
+        <Route path="assignments" element={<ProfAssignments />} />
+        <Route path="attendance" element={<ProfAttendance />} />
+        <Route path="gradebook" element={<ProfGradebook />} />
+        <Route path="students" element={<ProfStudents />} />
+        <Route path="analytics" element={<ProfAnalytics />} />
+        <Route path="settings" element={<ProfSettings />} />
+      </Route>
+
+      {/* Institutional Admin */}
+      <Route path="/inst-admin" element={
+        <PrivateRoute allowedRoles={['inst_admin']}>
+          <InstitutionalAdminLayout />
+        </PrivateRoute>
+      }>
+        <Route index element={<Navigate to="overview" replace />} />
+        <Route path="overview" element={<InstOverview />} />
+        <Route path="departments" element={<InstDepartments />} />
+        <Route path="dept-admins" element={<InstDeptAdmins />} />
+        <Route path="policies" element={<InstPolicies />} />
+        <Route path="escalations" element={<InstEscalations />} />
+        <Route path="analytics" element={<InstAnalytics />} />
+        <Route path="profile" element={<InstProfile />} />
+      </Route>
+
+      {/* Department Admin */}
+      <Route path="/dept-admin" element={
+        <PrivateRoute allowedRoles={['dept_admin']}>
+          <DepartmentalAdminLayout />
+        </PrivateRoute>
+      }>
+        <Route index element={<Navigate to="overview" replace />} />
+        <Route path="overview" element={<DeptOverview />} />
+        <Route path="courses" element={<DeptCourses />} />
+        <Route path="faculty" element={<DeptFaculty />} />
+        <Route path="analytics" element={<DeptAnalytics />} />
+        <Route path="student-issues" element={<DeptStudentIssues />} />
+        <Route path="policies" element={<DeptPolicies />} />
+        <Route path="profile" element={<DeptProfile />} />
+      </Route>
+
+      {/* Super Admin */}
+      <Route path="/super-admin" element={
+        <PrivateRoute allowedRoles={['super_admin']}>
+          <SuperAdminLayout />
+        </PrivateRoute>
+      }>
+        <Route index element={<Navigate to="overview" replace />} />
+        <Route path="overview" element={<SuperOverview />} />
+        <Route path="institutions" element={<SuperInstitutions />} />
+        <Route path="inst-admins" element={<SuperInstAdmins />} />
+        <Route path="monitoring" element={<SuperMonitoring />} />
+        <Route path="analytics" element={<SuperAnalytics />} />
+        <Route path="security-logs" element={<SuperSecurityLogs />} />
+        <Route path="policies" element={<SuperPolicies />} />
+        <Route path="profile" element={<SuperProfile />} />
+      </Route>
+
+      {/* Catch all */}
+      <Route path="*" element={<AuthRedirect />} />
     </Routes>
-  );
+  )
 }
 
-export default App;
+export default App

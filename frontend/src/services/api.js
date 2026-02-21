@@ -28,8 +28,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      if (window.location.pathname !== '/signin' && window.location.pathname !== '/signup') {
+        window.location.href = '/signin';
       }
     }
     return Promise.reject(error);
@@ -198,6 +198,11 @@ export const adminAPI = {
   createCourse: (data) => api.post('/admin/courses', data),
   updateCourse: (id, data) => api.put(`/admin/courses/${id}`, data),
   deleteCourse: (id) => api.delete(`/admin/courses/${id}`)
+};
+
+// Audit Logs API
+export const auditLogsAPI = {
+  getAll: (params) => api.get('/audit-logs', { params })
 };
 
 export default api;

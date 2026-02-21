@@ -105,17 +105,27 @@ app.use('/api/bulk', bulkRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 
-// Error handler
-app.use(errorHandler);
-
 // Handle 404
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
+// Error handler
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use. Stop the existing process or change PORT in backend/.env.`);
+    process.exit(1);
+  }
+
+  console.error('Server failed to start:', error.message);
+  process.exit(1);
 });
 
 module.exports = app;
