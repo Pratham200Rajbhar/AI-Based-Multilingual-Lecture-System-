@@ -1,12 +1,29 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Get API base URL with fallback for development and production
+const getBaseURL = () => {
+  // Check for environment variable first
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // In production, use relative URL (same origin)
+  if (import.meta.env.PROD) {
+    return '/api';
+  }
+
+  // In development, fallback to localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getBaseURL();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  timeout: 30000 // 30 second timeout
 });
 
 // Request interceptor - attach JWT token
