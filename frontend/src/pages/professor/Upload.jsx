@@ -10,6 +10,12 @@ export default function ProfessorUpload() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
+  const isTranscribableFile = (f) => {
+    if (!f) return false;
+    const ext = f.name.split('.').pop().toLowerCase();
+    return ['mp4', 'webm', 'mov', 'mp3', 'wav', 'ogg', 'm4a', 'flac', 'mpeg', 'mpga'].includes(ext);
+  };
+
   useEffect(() => {
     fetchCourses();
   }, []);
@@ -133,6 +139,19 @@ export default function ProfessorUpload() {
             </label>
           </div>
         </div>
+
+        {file && isTranscribableFile(file) && (
+          <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <span className="text-xl mt-0.5">🎙️</span>
+            <div>
+              <p className="text-sm font-medium text-blue-800">Auto-Transcription Enabled</p>
+              <p className="text-xs text-blue-600 mt-0.5">
+                This audio/video file will be automatically transcribed using AI (Groq Whisper).
+                The transcription will be available to students once processing is complete.
+              </p>
+            </div>
+          </div>
+        )}
 
         {uploading && (
           <div className="w-full bg-gray-200 rounded-full h-2">

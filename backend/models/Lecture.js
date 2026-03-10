@@ -16,7 +16,7 @@ const lectureSchema = new mongoose.Schema({
   },
   fileType: {
     type: String,
-    enum: ['pdf', 'video', 'document'],
+    enum: ['pdf', 'video', 'audio', 'document'],
     default: 'pdf'
   },
   fileName: {
@@ -36,6 +36,30 @@ const lectureSchema = new mongoose.Schema({
     type: Number,
     min: 1,
     max: 12
+  },
+  language: {
+    type: String,
+    default: 'en'
+  },
+  transcription: {
+    status: {
+      type: String,
+      enum: ['none', 'processing', 'completed', 'failed'],
+      default: 'none'
+    },
+    text: {
+      type: String,
+      default: ''
+    },
+    segments: [{
+      start: Number,
+      end: Number,
+      text: String
+    }],
+    language: String,
+    duration: Number,
+    completedAt: Date,
+    error: String
   }
 }, {
   timestamps: true

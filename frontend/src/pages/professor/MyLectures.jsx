@@ -3,6 +3,17 @@ import { Link } from 'react-router-dom';
 import { lecturesAPI, coursesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
+const TranscriptionBadge = ({ status }) => {
+  const config = {
+    none: { label: '—', cls: 'text-gray-400' },
+    processing: { label: '⏳ Transcribing...', cls: 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full text-xs' },
+    completed: { label: '✅ Transcribed', cls: 'text-green-600 bg-green-50 px-2 py-0.5 rounded-full text-xs' },
+    failed: { label: '❌ Failed', cls: 'text-red-600 bg-red-50 px-2 py-0.5 rounded-full text-xs' }
+  };
+  const c = config[status] || config.none;
+  return <span className={c.cls}>{c.label}</span>;
+};
+
 export default function ProfessorMyLectures() {
   const [lectures, setLectures] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -50,6 +61,16 @@ export default function ProfessorMyLectures() {
     }
   };
 
+  const handleRetryTranscription = async (id) => {
+    try {
+      await lecturesAPI.retryTranscription(id);
+      toast.success('Transcription retry started');
+      fetchLectures();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Retry failed');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -83,6 +104,7 @@ export default function ProfessorMyLectures() {
                 <tr>
                   <th className="text-left px-4 py-3 text-sm font-medium text-muted">Title</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-muted">Course</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Transcription</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-muted">Date</th>
                   <th className="text-right px-4 py-3 text-sm font-medium text-muted">Actions</th>
                 </tr>
@@ -95,6 +117,17 @@ export default function ProfessorMyLectures() {
                       <p className="text-xs text-muted truncate max-w-xs">{l.description || 'No description'}</p>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted">{l.course?.name || '—'}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <TranscriptionBadge status={l.transcription?.status || 'none'} />
+                      {l.transcription?.status === 'failed' && (
+                        <button
+                          onClick={() => handleRetryTranscription(l._id)}
+                          className="ml-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-sm text-muted">{new Date(l.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => handleDelete(l._id)} className="text-red-600 hover:text-red-800 text-sm">Delete</button>

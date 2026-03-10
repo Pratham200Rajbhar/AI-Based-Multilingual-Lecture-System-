@@ -67,12 +67,16 @@ export const lecturesAPI = {
   getAll: (params) => api.get('/lectures', { params }),
   getById: (id) => api.get(`/lectures/${id}`),
   create: (formData) => api.post('/lectures', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120000 // 2 min for large uploads
   }),
   update: (id, formData) => api.put(`/lectures/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120000
   }),
-  delete: (id) => api.delete(`/lectures/${id}`)
+  delete: (id) => api.delete(`/lectures/${id}`),
+  getTranscription: (id) => api.get(`/lectures/${id}/transcription`),
+  retryTranscription: (id, data) => api.post(`/lectures/${id}/transcription/retry`, data || {})
 };
 
 // Quizzes API

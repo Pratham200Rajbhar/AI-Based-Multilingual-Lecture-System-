@@ -24,6 +24,15 @@ const fileFilter = (req, file, cb) => {
     'video/mp4',
     'video/webm',
     'video/quicktime',
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    'audio/ogg',
+    'audio/m4a',
+    'audio/x-m4a',
+    'audio/mp4',
+    'audio/flac',
+    'audio/x-flac',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-powerpoint',
@@ -33,7 +42,7 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Allowed: PDF, MP4, WEBM, DOC, DOCX, PPT, PPTX'), false);
+    cb(new Error('Invalid file type. Allowed: PDF, MP4, WEBM, MP3, WAV, OGG, M4A, FLAC, DOC, DOCX, PPT, PPTX'), false);
   }
 };
 
