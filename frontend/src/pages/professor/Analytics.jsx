@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { coursesAPI, analyticsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function ProfessorAnalytics() {
-  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [courseAnalytics, setCourseAnalytics] = useState(null);
@@ -14,6 +12,7 @@ export default function ProfessorAnalytics() {
 
   useEffect(() => {
     if (selectedCourse) fetchCourseAnalytics();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCourse]);
 
   const fetchCourses = async () => {

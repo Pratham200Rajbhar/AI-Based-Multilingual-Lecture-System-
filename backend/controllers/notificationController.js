@@ -69,9 +69,9 @@ exports.getMyNotifications = async (req, res, next) => {
     });
 
     res.json({
-      notifications: result.data,
+      data: result.data,
       unreadCount,
-      ...result.pagination
+      pagination: { total: result.pagination.totalItems, ...result.pagination }
     });
   } catch (error) {
     next(error);
@@ -117,7 +117,10 @@ exports.markAllAsRead = async (req, res, next) => {
 // @route   DELETE /api/notifications/:id
 exports.deleteNotification = async (req, res, next) => {
   try {
-    await Notification.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    const notification = await Notification.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
     res.json({ message: 'Notification deleted' });
   } catch (error) {
     next(error);

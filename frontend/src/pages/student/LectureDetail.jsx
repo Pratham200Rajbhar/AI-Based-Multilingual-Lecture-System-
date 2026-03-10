@@ -10,6 +10,7 @@ export default function StudentLectureDetail() {
 
   useEffect(() => {
     fetchLecture();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchLecture = async () => {

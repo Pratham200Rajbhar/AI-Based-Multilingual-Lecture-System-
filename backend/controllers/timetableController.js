@@ -72,7 +72,7 @@ exports.getEntries = async (req, res, next) => {
       schedule[day] = entries.filter(e => e.dayOfWeek === day);
     });
 
-    res.json({ entries, schedule });
+    res.json({ data: entries, schedule });
   } catch (error) {
     next(error);
   }
@@ -82,7 +82,41 @@ exports.getEntries = async (req, res, next) => {
 // @route   PUT /api/timetable/:id
 exports.updateEntry = async (req, res, next) => {
   try {
-    const entry = await Timetable.findByIdAndUpdate(req.params.id, req.body, {
+    const { course, professor, dayOfWeek, startTime, endTime, room, semester, department } = req.body;
+
+    // Check for room conflicts (excluding current entry)
+    if (room && dayOfWeek && startTime && endTime) {
+      const roomConflict = await Timetable.findOne({
+        _id: { $ne: req.params.id },
+        room,
+        dayOfWeek,
+        $or: [
+          { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
+        ]
+      });
+      if (roomConflict) {
+        return res.status(400).json({ message: `Room ${room} has a conflict on ${dayOfWeek} at that time` });
+      }
+    }
+
+    // Check for professor conflicts (excluding current entry)
+    if (professor && dayOfWeek && startTime && endTime) {
+      const profConflict = await Timetable.findOne({
+        _id: { $ne: req.params.id },
+        professor,
+        dayOfWeek,
+        $or: [
+          { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
+        ]
+      });
+      if (profConflict) {
+        return res.status(400).json({ message: 'Professor has a scheduling conflict at that time' });
+      }
+    }
+
+    const entry = await Timetable.findByIdAndUpdate(req.params.id, {
+      course, professor, dayOfWeek, startTime, endTime, room, semester, department
+    }, {
       new: true,
       runValidators: true
     })

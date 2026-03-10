@@ -8,6 +8,7 @@ const institutionSchema = new mongoose.Schema({
   },
   code: {
     type: String,
+    required: [true, 'Institution code is required'],
     unique: true,
     uppercase: true,
     trim: true

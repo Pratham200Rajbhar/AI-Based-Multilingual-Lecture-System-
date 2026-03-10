@@ -129,7 +129,7 @@ export default function ProfessorLayout() {
               </div>
               <div className="hidden md:block">
                 <p className="text-[13px] font-medium text-[#0f172a]">{user?.name || 'Professor'}</p>
-                <p className="text-[11px] text-[#94a3b8]">{user?.department || 'Computer Science'}</p>
+                <p className="text-[11px] text-[#94a3b8]">{user?.department?.name || user?.department || 'Computer Science'}</p>
               </div>
             </div>
           </div>

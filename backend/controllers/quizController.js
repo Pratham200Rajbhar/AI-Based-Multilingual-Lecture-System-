@@ -45,13 +45,16 @@ exports.getAllQuizzes = async (req, res, next) => {
 
     const totalPages = Math.ceil(totalItems / limitNum);
     res.json({
-      quizzes: quizzesWithStatus,
-      currentPage: pageNum,
-      totalPages,
-      totalItems,
-      limit: limitNum,
-      hasNextPage: pageNum < totalPages,
-      hasPrevPage: pageNum > 1
+      data: quizzesWithStatus,
+      pagination: {
+        total: totalItems,
+        totalItems,
+        currentPage: pageNum,
+        totalPages,
+        limit: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      }
     });
   } catch (error) {
     next(error);
@@ -252,7 +255,16 @@ exports.updateQuiz = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized to update this quiz' });
     }
 
-    quiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, {
+    // Only allow updating safe fields — prevent changing createdBy, etc.
+    const { title, questions, timeLimit, deadline, course } = req.body;
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (questions !== undefined) updateData.questions = questions;
+    if (timeLimit !== undefined) updateData.timeLimit = timeLimit;
+    if (deadline !== undefined) updateData.deadline = deadline ? new Date(deadline) : null;
+    if (course !== undefined) updateData.course = course;
+
+    quiz = await Quiz.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true
     })

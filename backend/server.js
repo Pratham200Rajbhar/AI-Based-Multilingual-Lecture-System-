@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
+const morgan = require('morgan');
 const path = require('path');
 require('dotenv').config();
 
@@ -42,6 +43,10 @@ connectDB();
 // Try to connect to Redis (non-blocking, graceful fallback)
 initRedis().catch(() => console.log('Running without Redis cache'));
 
+// HTTP request logging
+const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
+app.use(morgan(morganFormat));
+
 // Security middleware
 app.use(helmet());
 app.use(mongoSanitize());
@@ -59,7 +64,7 @@ app.use('/api/', limiter);
 
 // CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
   exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset']
 }));
@@ -76,8 +81,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
 });
 
-// Performance metrics endpoint (admin)
-app.get('/api/metrics/performance', getMetrics);
+// Performance metrics endpoint (admin - protected)
+const auth = require('./middleware/auth');
+const roleCheck = require('./middleware/roleCheck');
+app.get('/api/metrics/performance', auth, roleCheck('inst_admin', 'super_admin'), getMetrics);
 
 // API Routes - Core
 app.use('/api/auth', authRoutes);

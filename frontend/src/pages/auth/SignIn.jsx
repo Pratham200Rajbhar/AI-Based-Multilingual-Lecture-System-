@@ -4,9 +4,9 @@ import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
 const MOCK_CREDENTIALS = [
-  { role: 'Super Admin', email: 'admin@demo.com', password: 'admin123' },
-  { role: 'Professor', email: 'professor@demo.com', password: 'prof123' },
-  { role: 'Student', email: 'student@demo.com', password: 'student123' }
+  { role: 'Super Admin', email: 'vraj@admin.com', password: 'Password@123' },
+  { role: 'Professor', email: 'vikram@iitb.ac.in', password: 'Password@123' },
+  { role: 'Student', email: 'rahul.v@iitb.ac.in', password: 'Password@123' }
 ]
 
 const signInImage = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=670&h=590&fit=crop"
@@ -89,7 +89,7 @@ export default function SignIn() {
               <input
                 type="email"
                 name="email"
-                placeholder="student@university.edu"
+                placeholder="rahul.v@iitb.ac.in"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -143,7 +143,7 @@ export default function SignIn() {
 
             {/* Sign up link */}
             <p className="text-center text-[16px] text-black">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link to="/signup" className="text-[#1d1b36] font-medium hover:underline">
                 Sign up
               </Link>

@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { quizzesAPI, coursesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function ProfessorQuizBuilder() {
-  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [form, setForm] = useState({ title: '', description: '', course: '', duration: 30, isActive: true });
   const [questions, setQuestions] = useState([{ question: '', options: ['', '', '', ''], correctAnswer: 0 }]);

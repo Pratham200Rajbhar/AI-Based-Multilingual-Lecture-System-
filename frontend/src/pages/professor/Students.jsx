@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { usersAPI, coursesAPI } from '../../services/api';
+import { usersAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function ProfessorStudents() {
@@ -9,6 +9,7 @@ export default function ProfessorStudents() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchStudents(); }, [page, search]);
 
   const fetchStudents = async () => {

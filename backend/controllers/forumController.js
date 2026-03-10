@@ -54,7 +54,10 @@ exports.getPosts = async (req, res, next) => {
       return obj;
     });
 
-    res.json({ posts, ...result.pagination });
+    res.json({
+      data: posts,
+      pagination: { total: result.pagination.totalItems, ...result.pagination }
+    });
   } catch (error) {
     next(error);
   }
@@ -135,7 +138,7 @@ exports.upvoteReply = async (req, res, next) => {
     const reply = post.replies.id(req.params.replyId);
     if (!reply) return res.status(404).json({ message: 'Reply not found' });
 
-    const userIdx = reply.upvotes.indexOf(req.user._id);
+    const userIdx = reply.upvotes.findIndex(id => id.toString() === req.user._id.toString());
     if (userIdx >= 0) {
       reply.upvotes.splice(userIdx, 1); // Remove upvote
     } else {

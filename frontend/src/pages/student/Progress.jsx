@@ -12,6 +12,7 @@ export default function StudentProgress() {
 
   useEffect(() => {
     fetchProgress();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProgress = async () => {

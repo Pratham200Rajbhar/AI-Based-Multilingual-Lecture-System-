@@ -9,6 +9,7 @@ export default function SuperSecurityLogs() {
   const [pagination, setPagination] = useState({});
   const [search, setSearch] = useState('');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchLogs(); }, [page]);
 
   const fetchLogs = async () => {

@@ -23,7 +23,10 @@ exports.getAllUsers = async (req, res, next) => {
       { path: 'department', select: 'name code' }
     ]);
 
-    res.json({ users: result.data, ...result.pagination });
+    res.json({
+      data: result.data,
+      pagination: { total: result.pagination.totalItems, ...result.pagination }
+    });
   } catch (error) {
     next(error);
   }

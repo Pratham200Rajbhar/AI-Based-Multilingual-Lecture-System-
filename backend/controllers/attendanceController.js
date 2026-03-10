@@ -13,9 +13,10 @@ exports.markAttendance = async (req, res, next) => {
     }
 
     // Check for existing attendance on that date for that course
+    const normalizedDate = new Date(new Date(date).setHours(0, 0, 0, 0));
     const existing = await Attendance.findOne({
       course,
-      date: new Date(date).setHours(0, 0, 0, 0)
+      date: normalizedDate
     });
 
     if (existing) {
@@ -28,7 +29,7 @@ exports.markAttendance = async (req, res, next) => {
 
     const attendance = await Attendance.create({
       course,
-      date: new Date(date).setHours(0, 0, 0, 0),
+      date: normalizedDate,
       markedBy: req.user._id,
       students
     });

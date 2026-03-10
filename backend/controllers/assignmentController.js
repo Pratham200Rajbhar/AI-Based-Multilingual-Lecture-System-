@@ -82,7 +82,10 @@ exports.getAssignments = async (req, res, next) => {
       filteredAssignments = assignments.filter(a => a.mySubmission && a.mySubmission.status === 'graded');
     }
 
-    res.json({ assignments: filteredAssignments, ...result.pagination });
+    res.json({
+      data: filteredAssignments,
+      pagination: { total: result.pagination.totalItems, ...result.pagination }
+    });
   } catch (error) {
     next(error);
   }

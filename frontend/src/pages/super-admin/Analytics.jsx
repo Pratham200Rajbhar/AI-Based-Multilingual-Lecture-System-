@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { adminAPI, analyticsAPI } from '../../services/api';
+import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function SuperAnalytics() {

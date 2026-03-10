@@ -37,7 +37,7 @@ exports.getEvents = async (req, res, next) => {
       .populate('createdBy', 'name')
       .sort({ startDate: 1 });
 
-    res.json({ events });
+    res.json({ data: events });
   } catch (error) {
     next(error);
   }

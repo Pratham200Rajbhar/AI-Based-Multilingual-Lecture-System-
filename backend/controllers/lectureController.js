@@ -27,7 +27,10 @@ exports.getAllLectures = async (req, res, next) => {
       { path: 'uploadedBy', select: 'name email' }
     ]);
 
-    res.json({ lectures: result.data, ...result.pagination });
+    res.json({
+      data: result.data,
+      pagination: { total: result.pagination.totalItems, ...result.pagination }
+    });
   } catch (error) {
     next(error);
   }

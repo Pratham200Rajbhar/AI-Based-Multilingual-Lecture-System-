@@ -18,6 +18,7 @@ export default function StudentLectures() {
 
   useEffect(() => {
     fetchLectures();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, courseFilter, search]);
 
   const fetchCourses = async () => {

@@ -14,7 +14,7 @@ export default function DeptOverview() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, usersRes, coursesRes, notifRes] = await Promise.allSettled([
+      const [statsRes, , , notifRes] = await Promise.allSettled([
         adminAPI.getStats(),
         usersAPI.getAll({ limit: 1, role: 'student' }),
         coursesAPI.getAll({ limit: 1 }),

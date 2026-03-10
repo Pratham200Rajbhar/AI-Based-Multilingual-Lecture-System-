@@ -9,7 +9,6 @@ export default function ProfessorUpload() {
   const [form, setForm] = useState({ title: '', description: '', course: '', language: 'en' });
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     fetchCourses();
@@ -28,7 +27,6 @@ export default function ProfessorUpload() {
     if (!form.course) return toast.error('Please select a course');
 
     setUploading(true);
-    setProgress(0);
     try {
       const formData = new FormData();
       formData.append('title', form.title);

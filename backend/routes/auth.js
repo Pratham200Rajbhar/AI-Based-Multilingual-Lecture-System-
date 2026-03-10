@@ -1,7 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
-const { register, login, getProfile, updateProfile } = require('../controllers/authController');
+const { register, login, getProfile, updateProfile, changePassword } = require('../controllers/authController');
 const auth = require('../middleware/auth');
 
 // @route   POST /api/auth/register
@@ -22,5 +22,8 @@ router.get('/profile', auth, getProfile);
 
 // @route   PUT /api/auth/profile
 router.put('/profile', auth, updateProfile);
+
+// @route   PUT /api/auth/change-password
+router.put('/change-password', auth, changePassword);
 
 module.exports = router;

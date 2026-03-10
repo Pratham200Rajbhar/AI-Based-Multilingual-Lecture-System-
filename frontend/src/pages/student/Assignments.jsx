@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { assignmentsAPI, coursesAPI } from '../../services/api';
+import { assignmentsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function StudentAssignments() {
   const [assignments, setAssignments] = useState([]);
-  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [selectedAssignment, setSelectedAssignment] = useState(null);
@@ -15,12 +14,10 @@ export default function StudentAssignments() {
 
   const fetchData = async () => {
     try {
-      const [aRes, cRes] = await Promise.allSettled([
-        assignmentsAPI.getAll(),
-        coursesAPI.getAll()
+      const [aRes] = await Promise.allSettled([
+        assignmentsAPI.getAll()
       ]);
       if (aRes.status === 'fulfilled') setAssignments(aRes.value.data.data || []);
-      if (cRes.status === 'fulfilled') setCourses(cRes.value.data.data || []);
     } catch (err) { toast.error('Failed to load assignments'); }
     finally { setLoading(false); }
   };

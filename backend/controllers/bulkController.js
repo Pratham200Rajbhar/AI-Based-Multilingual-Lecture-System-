@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Lecture = require('../models/Lecture');
 const path = require('path');
 
 // @desc    Bulk create users from JSON array

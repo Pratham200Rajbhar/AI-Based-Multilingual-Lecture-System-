@@ -18,7 +18,7 @@ export default function StudentTimetable() {
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const byDay = days.reduce((acc, day) => {
-    acc[day] = timetable.filter(t => t.day === day).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+    acc[day] = timetable.filter(t => t.dayOfWeek === day).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
     return acc;
   }, {});
 

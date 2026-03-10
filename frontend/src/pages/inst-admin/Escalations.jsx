@@ -13,16 +13,16 @@ export default function InstEscalations() {
 
   const fetchIssues = async () => {
     try {
-      const res = await forumAPI.getAll({ limit: 50 });
-      setIssues(res.data.data || []);
+      const res = await forumAPI.getPosts({ limit: 50 });
+      setIssues(res.data.posts || res.data.data || []);
     } catch (err) { toast.error('Failed to load escalations'); }
     finally { setLoading(false); }
   };
 
   const fetchDetail = async (id) => {
     try {
-      const res = await forumAPI.getById(id);
-      setSelected(res.data.data || res.data);
+      const res = await forumAPI.getPost(id);
+      setSelected(res.data.post || res.data.data || res.data);
     } catch (err) { toast.error('Failed to load details'); }
   };
 
@@ -38,16 +38,16 @@ export default function InstEscalations() {
 
   const handleResolve = async (id) => {
     try {
-      await forumAPI.update(id, { status: 'resolved' });
-      toast.success('Marked as resolved');
+      await forumAPI.toggleResolve(id);
+      toast.success('Status updated');
       fetchIssues();
       if (selected?._id === id) fetchDetail(id);
     } catch (err) { toast.error('Failed to resolve'); }
   };
 
   const filtered = filter === 'all' ? issues :
-    filter === 'open' ? issues.filter(i => i.status !== 'resolved') :
-    issues.filter(i => i.status === 'resolved');
+    filter === 'open' ? issues.filter(i => !i.isResolved) :
+    issues.filter(i => i.isResolved);
 
   if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
 
@@ -61,7 +61,7 @@ export default function InstEscalations() {
       <div className="flex gap-2">
         {['all', 'open', 'resolved'].map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-btn text-sm capitalize ${filter === f ? 'btn-primary' : 'border border-border hover:bg-gray-50'}`}>
-            {f} ({f === 'all' ? issues.length : f === 'open' ? issues.filter(i => i.status !== 'resolved').length : issues.filter(i => i.status === 'resolved').length})
+            {f} ({f === 'all' ? issues.length : f === 'open' ? issues.filter(i => !i.isResolved).length : issues.filter(i => i.isResolved).length})
           </button>
         ))}
       </div>
@@ -77,8 +77,8 @@ export default function InstEscalations() {
                 className={`bg-surface rounded-card border p-4 cursor-pointer transition-colors ${selected?._id === issue._id ? 'border-blue-500 bg-blue-50' : 'border-border hover:border-blue-300'}`}>
                 <div className="flex justify-between items-start">
                   <h3 className="font-medium text-sm">{issue.title}</h3>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${issue.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {issue.status || 'open'}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${issue.isResolved ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {issue.isResolved ? 'resolved' : 'open'}
                   </span>
                 </div>
                 <p className="text-xs text-muted mt-1 line-clamp-2">{issue.content || issue.message}</p>
@@ -101,11 +101,9 @@ export default function InstEscalations() {
                     <h2 className="text-lg font-semibold text-heading">{selected.title}</h2>
                     <p className="text-sm text-muted mt-1">By {selected.author?.name || 'Unknown'} • {new Date(selected.createdAt).toLocaleDateString()}</p>
                   </div>
-                  {selected.status !== 'resolved' && (
-                    <button onClick={() => handleResolve(selected._id)} className="bg-green-600 text-white px-3 py-1.5 rounded-btn text-sm hover:bg-green-700">
-                      Resolve
-                    </button>
-                  )}
+                  <button onClick={() => handleResolve(selected._id)} className={`${selected.isResolved ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'} text-white px-3 py-1.5 rounded-btn text-sm`}>
+                    {selected.isResolved ? 'Reopen' : 'Resolve'}
+                  </button>
                 </div>
               </div>
               <div className="p-5">
@@ -122,7 +120,7 @@ export default function InstEscalations() {
                   ))}
                 </div>
               )}
-              {selected.status !== 'resolved' && (
+              {!selected.isResolved && (
                 <div className="p-5 border-t border-border">
                   <div className="flex gap-2">
                     <input type="text" value={replyText} onChange={e => setReplyText(e.target.value)} className="form-input flex-1" placeholder="Type your response..." onKeyDown={e => e.key === 'Enter' && handleReply()} />

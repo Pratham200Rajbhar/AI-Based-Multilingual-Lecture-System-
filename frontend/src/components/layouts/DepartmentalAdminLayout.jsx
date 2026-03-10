@@ -74,7 +74,7 @@ export default function DepartmentalAdminLayout() {
         {/* Department Footer */}
         <div className="px-4 py-4 border-t border-white/10">
           <p className="text-[10px] text-[#64748b] uppercase tracking-wider">Department</p>
-          <p className="text-[13px] text-white font-semibold mt-0.5">{user?.department || 'Computer Science'}</p>
+          <p className="text-[13px] text-white font-semibold mt-0.5">{user?.department?.name || user?.department || 'Computer Science'}</p>
           <button onClick={handleLogout} className="flex items-center gap-2 mt-3 px-2 py-1.5 rounded-lg text-[12px] text-[#94a3b8] hover:text-white hover:bg-white/5 transition w-full">
             <Icons.Logout className="w-4 h-4" />
             Logout

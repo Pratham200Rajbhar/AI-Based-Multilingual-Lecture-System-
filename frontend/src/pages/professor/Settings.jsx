@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function ProfessorSettings() {
-  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: '', phone: '', bio: '' });
   const [saving, setSaving] = useState(false);
+
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => { fetchProfile(); }, []);
 
@@ -100,6 +101,52 @@ export default function ProfessorSettings() {
 
         <button onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
           {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
+
+      {/* Change Password */}
+      <div className="bg-surface rounded-card shadow-card border border-border p-6 space-y-5">
+        <h2 className="text-lg font-semibold text-heading">Change Password</h2>
+        <div>
+          <label className="block text-sm font-medium text-heading mb-1">Current Password</label>
+          <input type="password" value={passwordForm.currentPassword} onChange={e => setPasswordForm(f => ({ ...f, currentPassword: e.target.value }))} className="form-input w-full" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-heading mb-1">New Password</label>
+          <input type="password" value={passwordForm.newPassword} onChange={e => setPasswordForm(f => ({ ...f, newPassword: e.target.value }))} className="form-input w-full" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-heading mb-1">Confirm New Password</label>
+          <input type="password" value={passwordForm.confirmPassword} onChange={e => setPasswordForm(f => ({ ...f, confirmPassword: e.target.value }))} className="form-input w-full" />
+        </div>
+        <button
+          onClick={async () => {
+            if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+              toast.error('New passwords do not match');
+              return;
+            }
+            if (passwordForm.newPassword.length < 6) {
+              toast.error('Password must be at least 6 characters');
+              return;
+            }
+            setChangingPassword(true);
+            try {
+              await authAPI.changePassword({
+                currentPassword: passwordForm.currentPassword,
+                newPassword: passwordForm.newPassword
+              });
+              toast.success('Password changed successfully');
+              setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            } catch (err) {
+              toast.error(err.response?.data?.message || 'Failed to change password');
+            } finally {
+              setChangingPassword(false);
+            }
+          }}
+          disabled={changingPassword || !passwordForm.currentPassword || !passwordForm.newPassword}
+          className="btn-primary disabled:opacity-50"
+        >
+          {changingPassword ? 'Changing...' : 'Change Password'}
         </button>
       </div>
     </div>

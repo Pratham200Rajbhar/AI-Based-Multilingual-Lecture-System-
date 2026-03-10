@@ -27,6 +27,11 @@ exports.createAnnouncement = async (req, res, next) => {
         userFilter.department = targetAudience.department;
       } else if (type === 'course') {
         // Course-level announcements notify enrolled students (simplified)
+      } else {
+        // Institute-level: only notify users from the creator's institution
+        if (req.user.institution) {
+          userFilter.institution = req.user.institution;
+        }
       }
 
       const users = await User.find(userFilter).select('_id');
@@ -75,12 +80,15 @@ exports.getMyAnnouncements = async (req, res, next) => {
     const result = await paginate(Announcement, filter, {
       page,
       limit,
-      sort: { isPinned: -1, priority: -1, createdAt: -1 }
+      sort: { isPinned: -1, createdAt: -1 }
     }, [
       { path: 'createdBy', select: 'name' }
     ]);
 
-    res.json({ announcements: result.data, ...result.pagination });
+    res.json({
+      data: result.data,
+      pagination: { total: result.pagination.totalItems, ...result.pagination }
+    });
   } catch (error) {
     next(error);
   }
@@ -101,7 +109,10 @@ exports.getAllAnnouncements = async (req, res, next) => {
       { path: 'createdBy', select: 'name email' }
     ]);
 
-    res.json({ announcements: result.data, ...result.pagination });
+    res.json({
+      data: result.data,
+      pagination: { total: result.pagination.totalItems, ...result.pagination }
+    });
   } catch (error) {
     next(error);
   }

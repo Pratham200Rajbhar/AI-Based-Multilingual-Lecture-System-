@@ -13,6 +13,7 @@ export default function ProfessorMyLectures() {
   const [pagination, setPagination] = useState({});
 
   useEffect(() => { fetchCourses(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchLectures(); }, [page, courseFilter, search]);
 
   const fetchCourses = async () => {

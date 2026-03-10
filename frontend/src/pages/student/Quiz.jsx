@@ -12,6 +12,7 @@ export default function StudentQuiz() {
 
   useEffect(() => {
     fetchQuizzes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search]);
 
   const fetchQuizzes = async () => {

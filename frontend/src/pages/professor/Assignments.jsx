@@ -27,7 +27,13 @@ export default function ProfAssignments() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await assignmentsAPI.create(form);
+      const formData = new FormData();
+      formData.append('title', form.title);
+      formData.append('description', form.description);
+      formData.append('course', form.course);
+      formData.append('dueDate', form.dueDate);
+      formData.append('maxMarks', form.totalMarks);
+      await assignmentsAPI.create(formData);
       toast.success('Assignment created');
       setForm({ title: '', description: '', course: '', dueDate: '', totalMarks: 100 });
       setShowForm(false);

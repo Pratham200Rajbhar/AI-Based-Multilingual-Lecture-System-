@@ -13,7 +13,7 @@ const QuizResult = require('../models/QuizResult');
 exports.getInstitutions = async (req, res, next) => {
   try {
     const institutions = await Institution.find().sort({ name: 1 });
-    res.json({ institutions });
+    res.json({ data: institutions });
   } catch (error) {
     next(error);
   }
@@ -51,7 +51,15 @@ exports.deleteInstitution = async (req, res, next) => {
   try {
     const institution = await Institution.findByIdAndDelete(req.params.id);
     if (!institution) return res.status(404).json({ message: 'Institution not found' });
-    res.json({ message: 'Institution deleted successfully' });
+
+    // Cascade: remove departments, courses, and unset user references
+    const departments = await Department.find({ institution: req.params.id });
+    const deptIds = departments.map(d => d._id);
+    await Course.deleteMany({ department: { $in: deptIds } });
+    await Department.deleteMany({ institution: req.params.id });
+    await User.updateMany({ institution: req.params.id }, { $unset: { institution: 1, department: 1 } });
+
+    res.json({ message: 'Institution and related data deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -71,7 +79,7 @@ exports.getDepartments = async (req, res, next) => {
       .populate('institution', 'name code')
       .sort({ name: 1 });
 
-    res.json({ departments });
+    res.json({ data: departments });
   } catch (error) {
     next(error);
   }
@@ -110,7 +118,12 @@ exports.deleteDepartment = async (req, res, next) => {
   try {
     const department = await Department.findByIdAndDelete(req.params.id);
     if (!department) return res.status(404).json({ message: 'Department not found' });
-    res.json({ message: 'Department deleted successfully' });
+
+    // Cascade: remove courses under this department and unset user department references
+    await Course.deleteMany({ department: req.params.id });
+    await User.updateMany({ department: req.params.id }, { $unset: { department: 1 } });
+
+    res.json({ message: 'Department and related courses deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -131,7 +144,7 @@ exports.getCourses = async (req, res, next) => {
       .populate('department', 'name code')
       .sort({ name: 1 });
 
-    res.json({ courses });
+    res.json({ data: courses });
   } catch (error) {
     next(error);
   }
@@ -186,6 +199,8 @@ exports.getStats = async (req, res, next) => {
       totalUsers,
       totalStudents,
       totalProfessors,
+      totalDeptAdmins,
+      totalInstAdmins,
       totalInstitutions,
       totalDepartments,
       totalCourses,
@@ -196,6 +211,8 @@ exports.getStats = async (req, res, next) => {
       User.countDocuments(),
       User.countDocuments({ role: 'student' }),
       User.countDocuments({ role: 'professor' }),
+      User.countDocuments({ role: 'dept_admin' }),
+      User.countDocuments({ role: 'inst_admin' }),
       Institution.countDocuments(),
       Department.countDocuments(),
       Course.countDocuments(),
@@ -205,17 +222,17 @@ exports.getStats = async (req, res, next) => {
     ]);
 
     res.json({
-      stats: {
-        totalUsers,
-        totalStudents,
-        totalProfessors,
-        totalInstitutions,
-        totalDepartments,
-        totalCourses,
-        totalLectures,
-        totalQuizzes,
-        totalQuizResults
-      }
+      totalUsers,
+      totalStudents,
+      totalProfessors,
+      totalDeptAdmins,
+      totalInstAdmins,
+      totalInstitutions,
+      totalDepartments,
+      totalCourses,
+      totalLectures,
+      totalQuizzes,
+      totalQuizResults
     });
   } catch (error) {
     next(error);

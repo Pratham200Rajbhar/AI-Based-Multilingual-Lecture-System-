@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { quizzesAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function StudentQuizDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState({});
@@ -16,6 +15,7 @@ export default function StudentQuizDetail() {
 
   useEffect(() => {
     fetchQuiz();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchQuiz = async () => {
